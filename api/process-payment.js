@@ -16,16 +16,13 @@ module.exports = async (req, res) => {
     if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" })
 
     try {
-        const { amount, orderDetails } = req.body
+        const { orderDetails } = req.body
 
-        const itemCount = orderDetails.items.split(", ").length
-        const pricePerItem = Math.round((amount / itemCount) * 100)
-
-        const lineItems = orderDetails.items.split(", ").map(item => ({
-            name: item,
+        const lineItems = orderDetails.basket.map(item => ({
+            name: `${item.name} (${item.spice})`,
             quantity: "1",
             basePriceMoney: {
-                amount: BigInt(pricePerItem),
+                amount: BigInt(Math.round(item.price * 100)),
                 currency: "GBP"
             }
         }))
@@ -40,7 +37,6 @@ module.exports = async (req, res) => {
                     phone: orderDetails.phone,
                     address: orderDetails.address,
                     fulfillment: orderDetails.fulfillment,
-                    total: orderDetails.total
                 }
             },
             checkoutOptions: {
