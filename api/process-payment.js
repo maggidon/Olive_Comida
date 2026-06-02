@@ -1,10 +1,10 @@
-const { Client, Environment } = require("square")
+const { SquareClient, SquareEnvironment } = require("square")
 
-const client = new Client({
-    accessToken: process.env.SQUARE_ACCESS_TOKEN,
+const client = new SquareClient({
+    token: process.env.SQUARE_ACCESS_TOKEN,
     environment: process.env.SQUARE_ENVIRONMENT === "production"
-        ? Environment.Production
-        : Environment.Sandbox,
+        ? SquareEnvironment.Production
+        : SquareEnvironment.Sandbox,
 })
 
 module.exports = async (req, res) => {
@@ -18,16 +18,19 @@ module.exports = async (req, res) => {
     try {
         const { amount, orderDetails } = req.body
 
+        const itemCount = orderDetails.items.split(", ").length
+        const pricePerItem = Math.round((amount / itemCount) * 100)
+
         const lineItems = orderDetails.items.split(", ").map(item => ({
             name: item,
             quantity: "1",
             basePriceMoney: {
-                amount: BigInt(Math.round((amount / orderDetails.items.split(", ").length) * 100)),
+                amount: BigInt(pricePerItem),
                 currency: "GBP"
             }
         }))
 
-        const response = await client.checkoutApi.createPaymentLink({
+        const response = await client.checkout.createPaymentLink({
             idempotencyKey: crypto.randomUUID(),
             order: {
                 locationId: process.env.SQUARE_LOCATION_ID,
@@ -43,13 +46,10 @@ module.exports = async (req, res) => {
             checkoutOptions: {
                 redirectUrl: "https://www.olivecomida.com",
                 askForShippingAddress: false,
-            },
-            prePopulatedData: {
-                buyerPhoneNumber: orderDetails.phone,
             }
         })
 
-        const url = response.result.paymentLink.url
+        const url = response.paymentLink.url
         res.status(200).json({ success: true, checkoutUrl: url })
 
     } catch (error) {
