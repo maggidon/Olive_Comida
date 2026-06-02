@@ -1,0 +1,7 @@
+{
+  "name": "olivecomida-api",
+  "version": "1.0.0",
+  "dependencies": {
+    "squareup": "^39.0.0"
+  }
+}
