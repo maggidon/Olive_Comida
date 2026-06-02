@@ -1,4 +1,4 @@
-const { ApiError, Client, Environment } = require("squareup")
+const { Client, Environment } = require("square")
 
 const client = new Client({
     accessToken: process.env.SQUARE_ACCESS_TOKEN,
