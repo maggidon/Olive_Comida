@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
             }
         }))
 
-        const response = await client.checkout.createPaymentLink({
+        const response = await client.checkout.paymentLinks.create({
             idempotencyKey: crypto.randomUUID(),
             order: {
                 locationId: process.env.SQUARE_LOCATION_ID,
