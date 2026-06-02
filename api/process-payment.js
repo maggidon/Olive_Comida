@@ -33,10 +33,10 @@ module.exports = async (req, res) => {
                 locationId: process.env.SQUARE_LOCATION_ID,
                 lineItems,
                 metadata: {
-                    customerName: orderDetails.name,
-                    phone: orderDetails.phone,
-                    address: orderDetails.address,
-                    fulfillment: orderDetails.fulfillment,
+                    customerName: orderDetails.name || "Collection",
+                    phone: orderDetails.phone || "Not provided",
+                    address: orderDetails.address || "Collection",
+                    fulfillment: orderDetails.fulfillment || "collection",
                 }
             },
             checkoutOptions: {
