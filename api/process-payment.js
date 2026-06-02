@@ -37,6 +37,7 @@ module.exports = async (req, res) => {
                     phone: orderDetails.phone || "Not provided",
                     address: orderDetails.address || "Collection",
                     fulfillment: orderDetails.fulfillment || "collection",
+                    note: orderDetails.note || "None",
                 }
             },
             checkoutOptions: {
