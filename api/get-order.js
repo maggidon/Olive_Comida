@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
 
         const { data: order, error } = await supabase
             .from("orders")
-            .select("id, status, customer_name, fulfillment_type, delivery_address, postcode, order_note, items, total, created_at")
+            .select("id, order_number, status, customer_name, fulfillment_type, delivery_address, postcode, order_note, items, total, created_at")
             .eq("id", orderId)
             .single()
 
@@ -34,6 +34,7 @@ module.exports = async (req, res) => {
             success: true,
             order: {
                 id: order.id,
+                orderNumber: order.order_number,
                 status: order.status, // "pending" or "paid"
                 name: order.customer_name,
                 fulfillment: order.fulfillment_type,
