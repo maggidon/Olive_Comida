@@ -1,4 +1,5 @@
 const { SquareClient, SquareEnvironment } = require("square")
+const { createClient } = require("@supabase/supabase-js")
 
 const client = new SquareClient({
     token: process.env.SQUARE_ACCESS_TOKEN,
@@ -6,6 +7,11 @@ const client = new SquareClient({
         ? SquareEnvironment.Production
         : SquareEnvironment.Sandbox,
 })
+
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SECRET_KEY
+)
 
 module.exports = async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*")
@@ -27,12 +33,38 @@ module.exports = async (req, res) => {
             }
         }))
 
+        const total = orderDetails.basket.reduce((sum, item) => sum + item.price, 0)
+
+        // 1. Save the order to our own database FIRST, status = pending
+        const { data: savedOrder, error: dbError } = await supabase
+            .from("orders")
+            .insert({
+                status: "pending",
+                customer_name: orderDetails.name || "Collection",
+                customer_phone: orderDetails.phone || "Not provided",
+                fulfillment_type: orderDetails.fulfillment || "collection",
+                delivery_address: orderDetails.address || "Collection",
+                postcode: orderDetails.postcode || null,
+                order_note: orderDetails.note || "None",
+                items: orderDetails.basket,
+                total: total,
+            })
+            .select()
+            .single()
+
+        if (dbError) {
+            console.error("Supabase insert error:", dbError)
+            return res.status(500).json({ success: false, error: "Failed to save order" })
+        }
+
+        // 2. Create the Square payment link, redirecting to our confirmation page with our internal order ID
         const response = await client.checkout.paymentLinks.create({
             idempotencyKey: crypto.randomUUID(),
             order: {
                 locationId: process.env.SQUARE_LOCATION_ID,
                 lineItems,
                 metadata: {
+                    internalOrderId: savedOrder.id,
                     customerName: orderDetails.name || "Collection",
                     phone: orderDetails.phone || "Not provided",
                     address: orderDetails.address || "Collection",
@@ -41,13 +73,24 @@ module.exports = async (req, res) => {
                 }
             },
             checkoutOptions: {
-                redirectUrl: "https://www.olivecomida.com",
+                redirectUrl: `https://www.olivecomida.com/order-confirmed?order=${savedOrder.id}`,
                 askForShippingAddress: false,
             }
         })
 
         const url = response.paymentLink.url
-        res.status(200).json({ success: true, checkoutUrl: url })
+        const squareOrderId = response.paymentLink.orderId
+
+        // 3. Update our saved order with the Square order ID and payment link, for matching later
+        await supabase
+            .from("orders")
+            .update({
+                square_order_id: squareOrderId,
+                square_payment_link_url: url,
+            })
+            .eq("id", savedOrder.id)
+
+        res.status(200).json({ success: true, checkoutUrl: url, orderId: savedOrder.id })
 
     } catch (error) {
         console.error("Payment error:", error)
