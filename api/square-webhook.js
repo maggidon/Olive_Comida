@@ -58,9 +58,23 @@ module.exports = async (req, res) => {
                 }
 
                 if (order.status !== "paid") {
+                    // Get the current highest order_number among paid orders,
+                    // so this order is assigned the next number in sequence.
+                    // Only paid orders ever get a number — pending/abandoned
+                    // checkouts never consume a number.
+                    const { data: maxRow } = await supabase
+                        .from("orders")
+                        .select("order_number")
+                        .not("order_number", "is", null)
+                        .order("order_number", { ascending: false })
+                        .limit(1)
+                        .maybeSingle()
+
+                    const nextNumber = (maxRow?.order_number || 0) + 1
+
                     await supabase
                         .from("orders")
-                        .update({ status: "paid" })
+                        .update({ status: "paid", order_number: nextNumber })
                         .eq("id", order.id)
                 }
             }
