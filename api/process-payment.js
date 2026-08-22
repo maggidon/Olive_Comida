@@ -25,7 +25,9 @@ module.exports = async (req, res) => {
         const { orderDetails } = req.body
 
         const lineItems = orderDetails.basket.map(item => ({
-            name: `${item.name} (${item.spice})`,
+            name: item.sauce && item.sauce !== "Comida Standard"
+                ? `${item.name} (${item.spice} · ${item.sauce})`
+                : `${item.name} (${item.spice})`,
             quantity: "1",
             basePriceMoney: {
                 amount: BigInt(Math.round(item.price * 100)),
