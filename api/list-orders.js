@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
 
         const { data: orders, error } = await supabase
             .from("orders")
-            .select("id, order_number, status, customer_name, customer_phone, fulfillment_type, delivery_address, postcode, order_note, items, total, created_at")
+            .select("id, order_number, status, customer_name, customer_phone, fulfillment_type, delivery_address, postcode, order_note, items, total, created_at, paid_at")
             .order("created_at", { ascending: false })
             .limit(200)
 
@@ -47,6 +47,7 @@ module.exports = async (req, res) => {
                 items: o.items,
                 total: o.total,
                 createdAt: o.created_at,
+                paidAt: o.paid_at,
             }))
         })
 
