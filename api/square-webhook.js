@@ -74,7 +74,7 @@ module.exports = async (req, res) => {
 
                     await supabase
                         .from("orders")
-                        .update({ status: "paid", order_number: nextNumber })
+                        .update({ status: "paid", order_number: nextNumber, paid_at: new Date().toISOString() })
                         .eq("id", order.id)
                 }
             }
