@@ -2,7 +2,7 @@
 const { SquareClient, SquareEnvironment } = require("square")
 const { createClient } = require("@supabase/supabase-js")
 
-const DELIVERY_FEE_PENCE = 300
+const DELIVERY_FEE_PENCE = 250
 
 const client = new SquareClient({
     token: process.env.SQUARE_ACCESS_TOKEN,
